@@ -184,11 +184,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="classification.jpg" class="img-fluid figure-img"></p>
-<figcaption class="figure-caption">A Linear Classifier</figcaption>
+<p><img src="clustering.jpg" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">Clusters of Data</figcaption>
 </figure>
 </div>
-<p>This post covers the concept of clustering. Data from <a href="https://www.kaggle.com/datasets/muratkokludataset/dry-bean-dataset">here</a></p>
+<section id="clustering-algorithms" class="level2">
+<h2 class="anchored" data-anchor-id="clustering-algorithms">Clustering Algorithms</h2>
+<p>In many data science applications, it is necessary to discover relationships between data points such that we might identify different characteristics about the structure of our data. Distances between data points and the density of different ‘areas’ of our data may have value in determining patterns that would otherwise go unnocticed. We refer to the task of identifying related or ‘close’ subsets of data as clustering. Clustering does not attempt to make predictions about data. In fact, clustering is an <em>unsupervised</em> maching learning paradigm, which means it does not require labelled data to identify relationships within it. Clustering depends only on the data itself and does not require human supervision to discover patterns or other insights about the data. It is important to note, however, that clustering data can provide new insights to data consumers who may then use the results of cluster analysis to make predictions or train other machine learning models.</p>
+</section>
+<section id="beans" class="level2">
+<h2 class="anchored" data-anchor-id="beans">Beans</h2>
+<p>For this post, I will be utilizing a dataset containing data about beans. You may find the data used in this post <a href="https://www.kaggle.com/datasets/muratkokludataset/dry-bean-dataset">here</a>. Essentially, the dataset breaks down various measurements taken of seven different types of beans. The two we will be using to visualize and cluster our data are the major and minor axis lengths, which are measured in pixels (px) in this dataset. We could use other features as well, but limiting it to two allows us to clearly visualize the dataset and make assessments. Below, we plot the data:</p>
 <div class="cell" data-execution_count="1">
 <details>
 <summary>Code</summary>
@@ -198,76 +204,118 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="st">"Beans.csv"</span>)</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>major_axis <span class="op">=</span> df[<span class="st">"MajorAxisLength"</span>]</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>minor_axis <span class="op">=</span> df[<span class="st">"MinorAxisLength"</span>]</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>plt.scatter(major_axis, minor_axis, s<span class="op">=</span><span class="dv">1</span>)<span class="op">;</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Major Axis Length (px)"</span>)<span class="op">;</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Minor Axis Length (px)"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df.head())<span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>major_axis <span class="op">=</span> df[<span class="st">"MajorAxisLength"</span>]</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>minor_axis <span class="op">=</span> df[<span class="st">"MinorAxisLength"</span>]</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>plt.scatter(major_axis, minor_axis, s<span class="op">=</span><span class="dv">1</span>)<span class="op">;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Major Axis Length (px)"</span>)<span class="op">;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Minor Axis Length (px)"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output cell-output-stdout">
+<pre><code>    Area  Perimeter  MajorAxisLength  MinorAxisLength  AspectRation  \
+0  28395    610.291       208.178117       173.888747      1.197191   
+1  28734    638.018       200.524796       182.734419      1.097356   
+2  29380    624.110       212.826130       175.931143      1.209713   
+3  30008    645.884       210.557999       182.516516      1.153638   
+4  30140    620.134       201.847882       190.279279      1.060798   
+
+   Eccentricity  ConvexArea  EquivDiameter    Extent  Solidity  roundness  \
+0      0.549812       28715     190.141097  0.763923  0.988856   0.958027   
+1      0.411785       29172     191.272751  0.783968  0.984986   0.887034   
+2      0.562727       29690     193.410904  0.778113  0.989559   0.947849   
+3      0.498616       30724     195.467062  0.782681  0.976696   0.903936   
+4      0.333680       30417     195.896503  0.773098  0.990893   0.984877   
+
+   Compactness  ShapeFactor1  ShapeFactor2  ShapeFactor3  ShapeFactor4  Class  
+0     0.913358      0.007332      0.003147      0.834222      0.998724  SEKER  
+1     0.953861      0.006979      0.003564      0.909851      0.998430  SEKER  
+2     0.908774      0.007244      0.003048      0.825871      0.999066  SEKER  
+3     0.928329      0.007017      0.003215      0.861794      0.994199  SEKER  
+4     0.970516      0.006697      0.003665      0.941900      0.999166  SEKER  </code></pre>
+</div>
 <div class="cell-output cell-output-display">
 <div id="fig-beans-data" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="index_files/figure-html/fig-beans-data-output-1.png" width="593" height="429" class="figure-img"></p>
+<p><img src="index_files/figure-html/fig-beans-data-output-2.png" width="593" height="429" class="figure-img"></p>
 <figcaption class="figure-caption">Figure&nbsp;1: Bean Data</figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>Test</p>
+<p>Clearly, we can see the data appears to have more or less well-defined clusters. A qualitative examination of the graph shows us at least five of the seven clusters, with two of the remaining clusters likely obfuscated in the large blobs in thie lower left quadrant of the plot. The algorithm we will use to cluster our data in the next code segment is known as <em>k-means</em>. A k-means algorithm takes a set of data and attempts to cluster data around the nearest mean, also known as a cluster centroid. These clusters have minimized within-cluster variances (based on squared Euclidian distances). Included in the below code are two metrics that tell us information about the quality of our clustering, computed after running our model:</p>
 <div class="cell" data-execution_count="2">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.cluster <span class="im">import</span> MiniBatchKMeans</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.preprocessing <span class="im">import</span> LabelEncoder</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> warnings <span class="im">import</span> filterwarnings</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>filterwarnings(<span class="st">'ignore'</span>)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> df[[<span class="st">'MajorAxisLength'</span>, <span class="st">'MinorAxisLength'</span>]].copy()</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>label_encoder <span class="op">=</span> LabelEncoder()</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>bean_type <span class="op">=</span> df[<span class="st">"Class"</span>]</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>numeric_labels <span class="op">=</span> label_encoder.fit_transform(bean_type)</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>k <span class="op">=</span> <span class="dv">7</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>kmeans <span class="op">=</span> MiniBatchKMeans(n_clusters<span class="op">=</span>k, random_state<span class="op">=</span><span class="dv">55</span>)</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>y_pred <span class="op">=</span> kmeans.fit_predict(X)</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>centroids <span class="op">=</span> kmeans.cluster_centers_</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>mins <span class="op">=</span> X.<span class="bu">min</span>(axis<span class="op">=</span><span class="dv">0</span>) <span class="op">-</span> <span class="fl">0.1</span></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>maxs <span class="op">=</span> X.<span class="bu">max</span>(axis<span class="op">=</span><span class="dv">0</span>) <span class="op">+</span> <span class="fl">0.1</span></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>xx, yy <span class="op">=</span> np.meshgrid(np.linspace(mins[<span class="dv">0</span>], maxs[<span class="dv">0</span>], <span class="dv">1000</span>),</span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>                     np.linspace(mins[<span class="dv">1</span>], maxs[<span class="dv">1</span>], <span class="dv">1000</span>))</span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>Z <span class="op">=</span> kmeans.predict(np.c_[xx.ravel(), yy.ravel()])</span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>Z <span class="op">=</span> Z.reshape(xx.shape)</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>plt.contourf(Z, extent<span class="op">=</span>(mins[<span class="dv">0</span>], maxs[<span class="dv">0</span>], mins[<span class="dv">1</span>], maxs[<span class="dv">1</span>]), cmap<span class="op">=</span><span class="st">'Pastel2'</span>)</span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>plt.contour(Z, extent<span class="op">=</span>(mins[<span class="dv">0</span>], maxs[<span class="dv">0</span>], mins[<span class="dv">1</span>], maxs[<span class="dv">1</span>]), linewidths<span class="op">=</span><span class="dv">1</span>, colors<span class="op">=</span><span class="st">'k'</span>)</span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>plt.scatter(major_axis, minor_axis, c<span class="op">=</span>numeric_labels, s<span class="op">=</span><span class="dv">1</span>)<span class="op">;</span></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Major Axis Length (px)"</span>)<span class="op">;</span></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Minor Axis Length (px)"</span>)<span class="op">;</span></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>plt.scatter(centroids[:, <span class="dv">0</span>], centroids[:, <span class="dv">1</span>], marker<span class="op">=</span><span class="st">'o'</span>, s<span class="op">=</span><span class="dv">25</span>, linewidths<span class="op">=</span><span class="dv">6</span>, color<span class="op">=</span><span class="st">'w'</span>, zorder<span class="op">=</span><span class="dv">10</span>)</span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>plt.scatter(centroids[:, <span class="dv">0</span>], centroids[:, <span class="dv">1</span>], marker<span class="op">=</span><span class="st">'x'</span>, s<span class="op">=</span><span class="dv">2</span>, linewidths<span class="op">=</span><span class="dv">10</span>, color<span class="op">=</span><span class="st">'k'</span>, zorder<span class="op">=</span><span class="dv">11</span>, alpha<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.cluster <span class="im">import</span> MiniBatchKMeans</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.preprocessing <span class="im">import</span> LabelEncoder</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> warnings <span class="im">import</span> filterwarnings</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> calinski_harabasz_score</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> silhouette_score</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>filterwarnings(<span class="st">'ignore'</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> df[[<span class="st">'MajorAxisLength'</span>, <span class="st">'MinorAxisLength'</span>]].copy()</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>label_encoder <span class="op">=</span> LabelEncoder()</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>bean_type <span class="op">=</span> df[<span class="st">"Class"</span>]</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>numeric_labels <span class="op">=</span> label_encoder.fit_transform(bean_type)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>k <span class="op">=</span> <span class="dv">7</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>kmeans <span class="op">=</span> MiniBatchKMeans(n_clusters<span class="op">=</span>k, random_state<span class="op">=</span><span class="dv">55</span>)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>y_pred <span class="op">=</span> kmeans.fit_predict(X)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>centroids <span class="op">=</span> kmeans.cluster_centers_</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>mins <span class="op">=</span> X.<span class="bu">min</span>(axis<span class="op">=</span><span class="dv">0</span>) <span class="op">-</span> <span class="fl">0.1</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>maxs <span class="op">=</span> X.<span class="bu">max</span>(axis<span class="op">=</span><span class="dv">0</span>) <span class="op">+</span> <span class="fl">0.1</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>xx, yy <span class="op">=</span> np.meshgrid(np.linspace(mins[<span class="dv">0</span>], maxs[<span class="dv">0</span>], <span class="dv">1000</span>),</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>                     np.linspace(mins[<span class="dv">1</span>], maxs[<span class="dv">1</span>], <span class="dv">1000</span>))</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>Z <span class="op">=</span> kmeans.predict(np.c_[xx.ravel(), yy.ravel()])</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>Z <span class="op">=</span> Z.reshape(xx.shape)</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>plt.contourf(Z, extent<span class="op">=</span>(mins[<span class="dv">0</span>], maxs[<span class="dv">0</span>], mins[<span class="dv">1</span>], maxs[<span class="dv">1</span>]), cmap<span class="op">=</span><span class="st">'Pastel2'</span>)</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>plt.contour(Z, extent<span class="op">=</span>(mins[<span class="dv">0</span>], maxs[<span class="dv">0</span>], mins[<span class="dv">1</span>], maxs[<span class="dv">1</span>]), linewidths<span class="op">=</span><span class="dv">1</span>, colors<span class="op">=</span><span class="st">'k'</span>)</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>plt.scatter(major_axis, minor_axis, c<span class="op">=</span>numeric_labels, s<span class="op">=</span><span class="dv">1</span>)<span class="op">;</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Major Axis Length (px)"</span>)<span class="op">;</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Minor Axis Length (px)"</span>)<span class="op">;</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>plt.scatter(centroids[:, <span class="dv">0</span>], centroids[:, <span class="dv">1</span>], marker<span class="op">=</span><span class="st">'o'</span>, s<span class="op">=</span><span class="dv">25</span>, linewidths<span class="op">=</span><span class="dv">6</span>, color<span class="op">=</span><span class="st">'w'</span>, zorder<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>plt.scatter(centroids[:, <span class="dv">0</span>], centroids[:, <span class="dv">1</span>], marker<span class="op">=</span><span class="st">'x'</span>, s<span class="op">=</span><span class="dv">2</span>, linewidths<span class="op">=</span><span class="dv">10</span>, color<span class="op">=</span><span class="st">'k'</span>, zorder<span class="op">=</span><span class="dv">11</span>, alpha<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>silhouette_avg <span class="op">=</span> silhouette_score(X, kmeans.labels_)<span class="op">;</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Silhouette Score:"</span>, silhouette_avg)<span class="op">;</span></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>calinski_harabasz_score <span class="op">=</span> calinski_harabasz_score(X, kmeans.labels_)<span class="op">;</span></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Calinski-Harabasz Index:"</span>, calinski_harabasz_score)<span class="op">;</span></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Silhouette Score: 0.3992331677981161
+Calinski-Harabasz Index: 34239.3188491691</code></pre>
+</div>
 <div class="cell-output cell-output-display">
 <div id="fig-beans-class" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="index_files/figure-html/fig-beans-class-output-1.png" width="593" height="429" class="figure-img"></p>
+<p><img src="index_files/figure-html/fig-beans-class-output-2.png" width="593" height="429" class="figure-img"></p>
 <figcaption class="figure-caption">Figure&nbsp;2: Clustered Bean Data</figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>The clustering algorithm used above appears to have accurately determined the centroids of the seven clusters predicted to exist in the figure. The centroids, marked by a circle with a black cross, are placed more or less in the center of each of the seven clusters.</p>
+<p>Each of the seven beans has been identified in the above graph with a distinct color. The clustered colors represent the actual clusters of data (if perfectly clustered by color). The clustering algorithm used above appears to have determined quite accurately the centroids of the seven clusters predicted to exist in the figure. The centroids, marked by a circle with a black cross, are placed more or less in the center of each of the seven clusters. Two model metrics shown above are the Silhouette Score and the Calinski-Harabasz Index. The Silhouette Score gives a measure of how well-matched our data is to other data points within their clusters as opposed to how well-matched it is to data outside of their clusters. Ranging from -1 to 1, with 1 being well-matched within cluster, and -1 representing poor matching, the score produced from the above clustering shows that the data is relatively well-matched within clusters. I would hazard a guess that the blob made it somewhat difficult for our data to be perfectly clustered into seven groups. The Calinski-Harabasz Index similarly identifies how well-clustered the data is as a ratio between the sum of between-cluster dispersion and within-cluster dispersion. Essentailly, the larger the index, the more defined the clusters are.</p>
+<p>It is important to note that neither of these metrics depend upon labels known ahead of time and are solely dependent on the dataset itself (the major and minor axis lengths) and the results of the clustering algorithm. This should further accentuate the nature of k-means as an unsupervised machine learning algorithm.</p>
+</section>
+<section id="clustering-in-higher-dimensions" class="level2">
+<h2 class="anchored" data-anchor-id="clustering-in-higher-dimensions">Clustering in Higher Dimensions</h2>
+<p>As an addition to the above discussion on clustering, it is important to note that clustering may be performed on data sets with high numbers of important features, even more so than can be represented in traditional two or three dimensional plots. In many machine learning scenarios, it is important to consider many features, often more than can be easily visualized in low-dimensional spaces (which are the only ones we can graph and comprehend). There exist different methods for clustering data in these higher dimension spaces, often with tradeoffs associated with each method. Projection-based clustering methods tend to be the best at determining high-dimensional distance or density structures. The best of these methods construct graphs and use a (hopefully) familiar shortest path algorithm, Dijkstra’s algorithm, to compute the necessary quantities for clustering. It is possible that including other quantities from the bean dataset used above may have led to better clustering of our data.</p>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
